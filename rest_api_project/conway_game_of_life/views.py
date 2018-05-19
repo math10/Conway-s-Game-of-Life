@@ -41,73 +41,74 @@ def GridDetail(request, pk):
 
 @csrf_exempt
 def GridAfter(request, pk):
-    try:
-        grid = Grid.objects.get(pk=pk)
-    except Grid.DoesNotExist:
-        return HttpResponse(status=404)
-    
-    query = request.GET.get('after')
-    if query == None:
-        return HttpResponse(status=400)
-    else:
-        query = query.split(',')
-        for i in range(len(query)):
-            try:
-                query[i] = int(query[i])
-                if query[i] < 0:
+    if request.method == 'GET':
+        try:
+            grid = Grid.objects.get(pk=pk)
+        except Grid.DoesNotExist:
+            return HttpResponse(status=404)
+        
+        query = request.GET.get('after')
+        if query == None:
+            return HttpResponse(status=400)
+        else:
+            query = query.split(',')
+            for i in range(len(query)):
+                try:
+                    query[i] = int(query[i])
+                    if query[i] < 0:
+                        return HttpResponse(status=400)
+                except Exception:
                     return HttpResponse(status=400)
-            except Exception:
-                return HttpResponse(status=400)
-        sorted(query)
-        result = []
-        last = []
-        l = grid.x * grid.y
-        i = 0
-        while i < l:
-            row = grid.data[i:i+grid.y]
-            i += grid.y 
-            last.append(row)
-        age = 0
-        point = 0
-        length = len(query)
-        max_age = query[length-1]
-        while age < max_age:
+            sorted(query)
+            result = []
+            last = []
+            l = grid.x * grid.y
+            i = 0
+            while i < l:
+                row = grid.data[i:i+grid.y]
+                i += grid.y 
+                last.append(row)
+            age = 0
+            point = 0
+            length = len(query)
+            max_age = query[length-1]
+            while age < max_age:
+                while point < length and age == query[point]:
+                    result.append(''.join(last))
+                    point += 1
+                nxt = list(last)
+                dx = [1,1,0,-1,-1,-1,0,1]
+                dy = [0,1,1,1,0,-1,-1,-1]
+                for i in range(grid.x):
+                    nxt[i] = list(nxt[i])
+                    last[i] = list(last[i])
+                    for j in range(grid.y):
+                        totalPopulation = 0
+                        for k in range(8):
+                            x = i + dx[k]
+                            y = j + dy[k]
+                            if x >= 0 and x < grid.x and y >= 0 and y < grid.y and last[x][y] == 'x':
+                                totalPopulation += 1
+                        if last[i][j] == 'x':
+                            if totalPopulation >= 2 and totalPopulation <= 3:
+                                nxt[i][j] = 'x'
+                            else:
+                                nxt[i][j] = 'o'
+                        else:
+                            if totalPopulation == 3:
+                                nxt[i][j] = 'x'
+                            else:
+                                nxt[i][j] = 'o'
+                    nxt[i] = ''.join(nxt[i])
+                age += 1
+                last = list(nxt)
             while point < length and age == query[point]:
                 result.append(''.join(last))
                 point += 1
-            nxt = list(last)
-            dx = [1,1,0,-1,-1,-1,0,1]
-            dy = [0,1,1,1,0,-1,-1,-1]
-            for i in range(grid.x):
-                nxt[i] = list(nxt[i])
-                last[i] = list(last[i])
-                for j in range(grid.y):
-                    totalPopulation = 0
-                    for k in range(8):
-                        x = i + dx[k]
-                        y = j + dy[k]
-                        if x >= 0 and x < grid.x and y >= 0 and y < grid.y and last[x][y] == 'x':
-                            totalPopulation += 1
-                    if last[i][j] == 'x':
-                        if totalPopulation >= 2 and totalPopulation <= 3:
-                            nxt[i][j] = 'x'
-                        else:
-                            nxt[i][j] = 'o'
-                    else:
-                        if totalPopulation == 3:
-                            nxt[i][j] = 'x'
-                        else:
-                            nxt[i][j] = 'o'
-                nxt[i] = ''.join(nxt[i])
-            age += 1
-            last = list(nxt)
-        while point < length and age == query[point]:
-            result.append(''.join(last))
-            point += 1
-        response = {'id': grid.id, 'x': grid.x, 'y': grid.y, 'data': []}
-        ages = []
-        for i in range(length):
-            age = {'age': query[i], 'grid': result[i]}
-            ages.append(age)
-        response['data'] = ages
-    return JsonResponse(response)
+            response = {'id': grid.id, 'x': grid.x, 'y': grid.y, 'data': []}
+            ages = []
+            for i in range(length):
+                age = {'age': query[i], 'grid': result[i]}
+                ages.append(age)
+            response['data'] = ages
+        return JsonResponse(response)
