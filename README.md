@@ -1,10 +1,11 @@
 # Conway-s-Game-of-Life
 Let assume this is a grid,
+```
 oxoo
 oxox
 xoxo
 xxxo
-
+```
 where 'x' means live cell and 'o' means dead cell.
 
 In api this grid considered as a single string and the single string is constructed by appending row order. For given grid, its database version should be this,
